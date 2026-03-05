@@ -5,6 +5,9 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Dashboard from "./pages/core/Dashboard";
 import Leads from "./pages/leads/Leads";
+import BookingsPage from "./pages/Booking/BookingsPage";
+import QuotationsPage from "./pages/Quotation/QuotationsPage";
+
 
 import DashboardLayout from "./components/layout/Layout";
 
@@ -22,6 +25,8 @@ function App() {
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} /> 
           <Route path="/leads" element={<Leads />} /> 
+          <Route path="/bookings" element={<BookingsPage />} /> 
+          <Route path="/quotations" element={<QuotationsPage />} /> 
 
         </Route>  
 
