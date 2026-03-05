@@ -29,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
 
         <a
-          href="#"
+          href="/dashboard"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-600 font-medium"
         >
           <i className="fa-solid fa-grid-2 w-5 text-center"></i>
@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         </a>
 
         <a
-          href="#"
+          href="/leads"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium"
         >
           <i className="fa-solid fa-user-group w-5 text-center"></i>
@@ -53,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         </a>
 
         <a
-          href="#"
+          href="/bookings"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium"
         >
           <i className="fa-solid fa-calendar-check w-5 text-center"></i>
