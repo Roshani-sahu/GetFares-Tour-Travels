@@ -5,6 +5,9 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Dashboard from "./pages/core/Dashboard";
 import Leads from "./pages/leads/Leads";
+import BookingsPage from "./pages/Booking/BookingsPage";
+import QuotationsPage from "./pages/Quotation/QuotationsPage";
+
 import LeadsDetail from "./pages/leads/LeadDetails";
 import CreateLead from "./pages/leads/CreateLead";
 
@@ -25,6 +28,8 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} /> 
 
           <Route path="/leads" element={<Leads />} /> 
+          <Route path="/bookings" element={<BookingsPage />} /> 
+          <Route path="/quotations" element={<QuotationsPage />} /> 
           <Route path="/leads-details" element={<LeadsDetail />} /> 
           <Route path="/create-lead" element={<CreateLead />} /> 
 
