@@ -195,7 +195,7 @@ const QuotationsPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen text-gray-800 font-sans antialiased">
+    <div className="bg-gray-100  text-gray-800 font-sans antialiased">
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;
@@ -227,44 +227,12 @@ const QuotationsPage: React.FC = () => {
       `}</style>
 
       {/* Main Content Area */}
-      <div className="flex flex-col min-h-screen bg-gray-100">
-        {/* Top Bar */}
-        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-10">
-          {/* Breadcrumbs & Title */}
-          <div className="flex items-center flex-1 gap-4">
-            <nav className="hidden md:flex" aria-label="Breadcrumb">
-              <ol className="flex items-center space-x-2">
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-gray-500">
-                    <i className="fa-solid fa-house text-sm"></i>
-                  </a>
-                </li>
-                <li>
-                  <div className="flex items-center">
-                    <i className="fa-solid fa-chevron-right text-gray-300 text-xs mx-2"></i>
-                    <span className="text-sm font-medium text-gray-900">Quotations</span>
-                  </div>
-                </li>
-              </ol>
-            </nav>
-          </div>
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-2 sm:gap-4 ml-auto">
-            <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-100">
-              <i className="fa-regular fa-bell text-xl"></i>
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-            <div className="h-8 w-px bg-gray-200 mx-1"></div>
-            <button className="text-gray-500 hover:text-gray-700">
-              <i className="fa-solid fa-circle-question text-lg"></i>
-            </button>
-          </div>
-        </header>
+      <div className="flex flex-col bg-gray-100">
+      
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 custom-scrollbar">
-          <div className="max-w-7xl mx-auto space-y-6">
+        <main className="flex-1 ">
+          <div className=" mx-auto space-y-6">
             
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

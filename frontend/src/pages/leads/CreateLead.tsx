@@ -103,11 +103,11 @@ const CreateLead: React.FC = () => {
         }
       `}</style>
 
-      <div className="flex h-screen overflow-hidden bg-gray-100">
+      <div className="flex  bg-gray-100">
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-100 relative">
+        <div className="flex-1 flex flex-col bg-gray-100 relative">
           {/* Scrollable Form Content */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 pb-24">
+          <main className="flex-1  pb-24">
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Main Form Column */}

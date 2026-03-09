@@ -318,40 +318,12 @@ const Payments: React.FC = () => {
       `}</style>
 
       {/* Main Content Area */}
-      <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
+      <div className="flex flex-col  bg-gray-100">
         {/* Top Bar */}
-        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-10">
-          <div className="flex items-center flex-1 gap-4">
-            <h1 className="text-lg md:text-xl font-bold text-gray-900 truncate">Payments & Invoices</h1>
-          </div>
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-            <div className="relative hidden lg:block">
-              <input 
-                type="text" 
-                placeholder="Search transactions..." 
-                className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 xl:w-64"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <FaUser className="absolute left-3 top-2.5 text-gray-400 text-sm" />
-            </div>
-            <button className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50">
-              <FaRegBell className="text-lg" />
-              <span className="absolute top-1.5 right-1.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-            </button>
-            <button 
-              onClick={toggleSlideOver}
-              className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-auto justify-center"
-            >
-              <FaPlus className="sm:mr-2" /> <span className="hidden sm:inline whitespace-nowrap">Add Payment</span>
-            </button>
-          </div>
-        </header>
+      
 
         {/* Content Area (Scrollable) */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 custom-scrollbar">
+        <main className="flex-1 ">
           
           {/* KPI Mini-cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 md:mb-8">

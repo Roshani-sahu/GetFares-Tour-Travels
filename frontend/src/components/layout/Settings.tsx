@@ -551,38 +551,13 @@ const Settings: React.FC = () => {
           background-color: #3b82f6;
         }
         
-        .shadow-soft {
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-        }
+        
       `}</style>
 
       {/* Main Content Area */}
       <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
         {/* Top Bar */}
-        <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 z-10">
-          <div className="flex items-center flex-1 gap-4">
-            <h1 className="text-lg md:text-xl font-bold text-gray-900 truncate">Settings</h1>
-          </div>
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-            <div className="relative hidden lg:block">
-              <input 
-                type="text" 
-                placeholder="Search settings..." 
-                className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 xl:w-64"
-              />
-              <FaSearch className="absolute left-3 top-2.5 text-gray-400 text-sm" />
-            </div>
-            <button className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50">
-              <FaBell className="text-lg" />
-              <span className="absolute top-1.5 right-1.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-            </button>
-            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
-              AM
-            </div>
-          </div>
-        </header>
+       
 
         {/* Settings Content Layout */}
         <main className="flex-1 overflow-hidden flex flex-col md:flex-row">
@@ -615,7 +590,7 @@ const Settings: React.FC = () => {
           </div>
 
           {/* Main Settings Panel */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar bg-gray-50/50">
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
             {activeTab === 'user-management' && renderUserManagement()}
             {activeTab === 'roles-permissions' && renderRolesPermissions()}
             {activeTab === 'system-settings' && renderSystemSettings()}
