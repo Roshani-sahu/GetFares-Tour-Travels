@@ -14,6 +14,7 @@ import LeadsDetail from "./pages/leads/LeadDetails";
 import CreateLead from "./pages/leads/CreateLead";
 
 import DashboardLayout from "./components/layout/Layout";
+import Payments from "./components/layout/Payments";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/settings" element={<Settings />} /> 
           <Route path="/leads-details" element={<LeadsDetail />} /> 
           <Route path="/create-lead" element={<CreateLead />} /> 
+          <Route path="/payments" element={<Payments />} /> 
 
         </Route>  
 
