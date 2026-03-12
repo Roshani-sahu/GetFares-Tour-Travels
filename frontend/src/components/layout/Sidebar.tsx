@@ -1,27 +1,33 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { FaChartPie, FaChevronLeft, FaChevronRight, FaCreditCard, FaFileInvoiceDollar, FaFolderOpen, FaGear, FaPassport, FaPlaneDeparture, FaTableCellsLarge, FaUserGroup, FaUsers, FaXmark } from "react-icons/fa6";
+import { useAuth } from "../../context/AuthContext";
 
 const sections = [
   {
     title: "Main",
     items: [
-      { label: "Dashboard", to: "/dashboard", icon: FaTableCellsLarge },
-      { label: "Leads", to: "/leads", icon: FaUserGroup },
-      { label: "Quotations", to: "/quotations", icon: FaFileInvoiceDollar },
-      { label: "Bookings", to: "/bookings", icon: FaPassport },
-      { label: "Payments", to: "/payments", icon: FaCreditCard },
-      { label: "Visa", to: "#", icon: FaPassport },
+      { label: "Dashboard", to: "/dashboard", icon: FaTableCellsLarge, permission: "reports.read" },
+      { label: "Leads", to: "/leads", icon: FaUserGroup, permission: "leads.read" },
+      { label: "Quotations", to: "/quotations", icon: FaFileInvoiceDollar, permission: "quotations.read" },
+      { label: "Bookings", to: "/bookings", icon: FaPassport, permission: "bookings.read" },
+      { label: "Payments", to: "/payments", icon: FaCreditCard, permission: "payments.read" },
+      { label: "Refunds", to: "/refunds", icon: FaCreditCard, permission: "refunds.read" },
+      { label: "Visa", to: "/visa", icon: FaPassport, permission: "visa.read" },
+      { label: "Complaints", to: "/complaints", icon: FaFolderOpen, permission: "complaints.read" },
       { label: "Documents", to: "#", icon: FaFolderOpen },
       { label: "Customers", to: "#", icon: FaUsers },
-      { label: "Reports", to: "#", icon: FaChartPie },
+      { label: "Reports", to: "/reports", icon: FaChartPie, permission: "reports.read" },
     ],
   },
-  { title: "System", items: [{ label: "Settings", to: "/settings", icon: FaGear }] },
+  { title: "System", items: [{ label: "Settings", to: "/settings", icon: FaGear, permission: "settings.read" }] },
 ];
 
-const Sidebar: React.FC<{ collapsed: boolean; onToggleCollapse: () => void; onClose?: () => void }> = ({ collapsed, onToggleCollapse, onClose }) => (
-  <aside className={`flex h-full flex-col border-r border-gray-200 bg-white transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 ${collapsed ? "w-20" : "w-72"}`}>
+const Sidebar: React.FC<{ collapsed: boolean; onToggleCollapse: () => void; onClose?: () => void }> = ({ collapsed, onToggleCollapse, onClose }) => {
+  const { hasPermission } = useAuth();
+
+  return (
+    <aside className={`flex h-full flex-col border-r border-gray-200 bg-white transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 ${collapsed ? "w-20" : "w-72"}`}>
     <div className="flex h-16 items-center border-b border-gray-100 px-4 dark:border-gray-800">
       <div className="mr-3 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white"><FaPlaneDeparture /></div>
       {!collapsed ? <span className="text-lg font-bold text-gray-900 dark:text-gray-100">GetFares CRM</span> : null}
@@ -34,6 +40,7 @@ const Sidebar: React.FC<{ collapsed: boolean; onToggleCollapse: () => void; onCl
           {!collapsed ? <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">{section.title}</p> : null}
           <div className="space-y-1">
             {section.items.map((item) => {
+              if (item.permission && !hasPermission(item.permission)) return null;
               const Icon = item.icon;
               if (item.to === "#") {
                 return <button key={item.label} className={`flex w-full rounded-xl px-3 py-2.5 text-sm text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 ${collapsed ? "justify-center" : "items-center gap-3"}`}><Icon />{!collapsed ? item.label : null}</button>;
@@ -60,6 +67,7 @@ const Sidebar: React.FC<{ collapsed: boolean; onToggleCollapse: () => void; onCl
       </button>
     </div>
   </aside>
-);
+  );
+};
 
 export default Sidebar;

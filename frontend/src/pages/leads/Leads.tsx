@@ -61,7 +61,7 @@ const Leads: React.FC = () => {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-[1100px] w-full divide-y divide-gray-200 dark:divide-gray-800">
+              <table className="w-full divide-y divide-gray-200 dark:divide-gray-800">
                 <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/95">
                   <tr>
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Lead</th>

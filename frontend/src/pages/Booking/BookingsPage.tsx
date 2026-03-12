@@ -15,6 +15,7 @@ import {
 } from "react-icons/fa6";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import EmptyState from "../../components/ui/EmptyState";
+import { validateBookingTransition } from "../../utils/workflowValidation";
 
 type BookingStatus = "confirmed" | "pending" | "cancelled";
 type PaymentStatus = "partial" | "unpaid" | "paid" | "refunded";
@@ -105,6 +106,7 @@ const BookingsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<"all" | BookingStatus>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [error, setError] = useState("");
   const pageSize = 4;
 
   const filtered = useMemo(() => {
@@ -120,6 +122,12 @@ const BookingsPage: React.FC = () => {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const rows = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const cancelBooking = () => {
+    const cancellationReason = window.prompt("Cancellation reason is required for CANCELLED status.");
+    const validationError = validateBookingTransition("CANCELLED", cancellationReason ?? "");
+    setError(validationError);
+  };
 
   return (
     <div className="space-y-6">
@@ -161,6 +169,7 @@ const BookingsPage: React.FC = () => {
       </div>
 
       <SurfaceCard className="p-0 overflow-hidden">
+        {error ? <p className="border-b border-gray-100 px-4 py-2 text-sm text-red-500 dark:border-gray-800">{error}</p> : null}
         <div className="border-b border-gray-100 p-4 dark:border-gray-800">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -246,7 +255,7 @@ const BookingsPage: React.FC = () => {
                         <div className="flex justify-end gap-2 opacity-0 transition-all duration-200 group-hover:opacity-100">
                           <button className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"><FaEye /></button>
                           <button className="rounded-lg border border-gray-200 p-2 text-blue-600 hover:bg-blue-50 dark:border-gray-700 dark:hover:bg-blue-900/20"><FaFileInvoiceDollar /></button>
-                          <button className="rounded-lg border border-gray-200 p-2 text-green-600 hover:bg-green-50 dark:border-gray-700 dark:hover:bg-green-900/20"><FaPaperPlane /></button>
+                          <button onClick={cancelBooking} className="rounded-lg border border-gray-200 p-2 text-green-600 hover:bg-green-50 dark:border-gray-700 dark:hover:bg-green-900/20"><FaPaperPlane /></button>
                         </div>
                       </td>
                     </tr>

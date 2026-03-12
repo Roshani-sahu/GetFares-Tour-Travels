@@ -1,6 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
+import { validateLeadTransition } from "../../utils/workflowValidation";
 
 const LeadDetails: React.FC = () => {
+  const navigate = useNavigate();
+  const [leadStatus, setLeadStatus] = useState("NEW");
+  const [leadError, setLeadError] = useState("");
+
+  const markLost = () => {
+    const closedReason = window.prompt("Closed reason is required for LOST lead status.");
+    const error = validateLeadTransition("LOST", closedReason ?? "");
+    setLeadError(error);
+    if (!error) setLeadStatus("LOST");
+  };
+
   return (
     <main className="flex-1 overflow-y-auto  bg-gray-100">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -15,7 +28,7 @@ const LeadDetails: React.FC = () => {
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-gray-900">Sarah Connor</h1>
                 <span className="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 border border-green-200">
-                  New Lead
+                  {leadStatus}
                 </span>
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
@@ -29,17 +42,27 @@ const LeadDetails: React.FC = () => {
             <button className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
               <i className="fa-solid fa-user-plus text-gray-400"></i> Assign
             </button>
-            <button className="w-full sm:w-auto bg-white hover:bg-gray-50 text-red-600 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
+            <button onClick={markLost} className="w-full sm:w-auto bg-white hover:bg-gray-50 text-red-600 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
               <i className="fa-solid fa-ban"></i> Mark Lost
             </button>
-            <button className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
-              <i className="fa-solid fa-file-invoice-dollar text-gray-400"></i> Create Quote
+            <button onClick={() => navigate("/quotations/builder")} className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
+              <i className="fa-solid fa-file-invoice-dollar text-gray-400"></i> Create Quotation
             </button>
-            <button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
-              <i className="fa-solid fa-check"></i> Convert to Booking
+            <button onClick={() => navigate("/bookings")} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
+              <i className="fa-solid fa-check"></i> Create Booking
+            </button>
+            <button onClick={() => navigate("/payments")} className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
+              <i className="fa-solid fa-credit-card text-gray-400"></i> Add Payment
+            </button>
+            <button onClick={() => navigate("/visa/visa-1")} className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
+              <i className="fa-solid fa-passport text-gray-400"></i> Create Visa Case
+            </button>
+            <button onClick={() => navigate("/complaints")} className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center justify-center gap-2">
+              <i className="fa-solid fa-triangle-exclamation text-gray-400"></i> Raise Complaint
             </button>
           </div>
         </div>
+        {leadError ? <p className="text-sm text-red-500">{leadError}</p> : null}
 
         {/* Split Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -1,7 +1,15 @@
 import type { ReactNode } from "react";
 
-const EmptyState = ({ title, description, action, icon }: { title: string; description: string; action?: ReactNode; icon?: ReactNode }) => (
-  <div className="surface-card flex min-h-72 flex-col items-center justify-center text-center">
+type Props = {
+  title: string;
+  description: string;
+  action?: ReactNode;
+  icon?: ReactNode;
+  className?: string;
+};
+
+const EmptyState = ({ title, description, action, icon, className }: Props) => (
+  <div className={`surface-card flex min-h-72 flex-col items-center justify-center text-center ${className ?? ""}`}>
     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">
       {icon ?? <span className="text-lg font-semibold">?</span>}
     </div>
