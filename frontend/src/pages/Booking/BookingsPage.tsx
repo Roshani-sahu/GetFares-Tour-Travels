@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaArrowTrendUp,
   FaCalendarDays,
@@ -103,6 +104,7 @@ const bookings: Booking[] = [
 ];
 
 const BookingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<"all" | BookingStatus>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -252,8 +254,13 @@ const BookingsPage: React.FC = () => {
                         <p className="text-xs text-gray-600 dark:text-gray-300">{booking.documentsReady}/{booking.documentsTotal} ready</p>
                       </td>
                       <td className="px-5 py-4">
-                        <div className="flex justify-end gap-2 opacity-0 transition-all duration-200 group-hover:opacity-100">
-                          <button className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"><FaEye /></button>
+                        <div className="flex justify-end gap-2 transition-all duration-200">
+                          <button
+                            className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                            onClick={() => navigate(`/bookings/${booking.id}`)}
+                          >
+                            <FaEye />
+                          </button>
                           <button className="rounded-lg border border-gray-200 p-2 text-blue-600 hover:bg-blue-50 dark:border-gray-700 dark:hover:bg-blue-900/20"><FaFileInvoiceDollar /></button>
                           <button onClick={cancelBooking} className="rounded-lg border border-gray-200 p-2 text-green-600 hover:bg-green-50 dark:border-gray-700 dark:hover:bg-green-900/20"><FaPaperPlane /></button>
                         </div>
