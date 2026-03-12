@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import { TextInput, UUIDSelect } from "../../components/form";
 import SurfaceCard from "../../components/ui/SurfaceCard";
@@ -10,6 +11,7 @@ const complaintsSeed = [
 ];
 
 const ComplaintsPage = () => {
+  const navigate = useNavigate();
   const [rows, setRows] = useState(complaintsSeed);
   const [form, setForm] = useState({ bookingId: "", assignedTo: "", issueType: "", description: "", status: "OPEN" });
   const [error, setError] = useState("");
@@ -70,7 +72,7 @@ const ComplaintsPage = () => {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {rows.map((row) => (
-                <tr key={row.id}>
+                <tr key={row.id} onClick={() => navigate(`/complaints/${row.id}`)} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                   <td className="px-5 py-4 text-sm font-medium text-blue-600 dark:text-blue-300">{row.id}</td>
                   <td className="px-5 py-4 text-sm text-gray-700 dark:text-gray-200">{row.bookingId}</td>
                   <td className="px-5 py-4 text-sm text-gray-700 dark:text-gray-200">{row.issueType}</td>
