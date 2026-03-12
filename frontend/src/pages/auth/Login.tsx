@@ -1,11 +1,44 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+ const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({ email: "", password: "" });
+  const navigate = useNavigate();
 
   const togglePassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  const validateForm = () => {
+    const newErrors = { email: "", password: "" };
+    
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Please enter a valid email";
+    }
+    
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    
+    setErrors(newErrors);
+    return !newErrors.email && !newErrors.password;
+  };
+
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validateForm()) {
+      // Here you can add authentication logic
+      // For now, we'll just redirect to dashboard
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -116,7 +149,7 @@ const Login = () => {
           </div>
 
           {/* FORM */}
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSignIn}>
 
             {/* EMAIL */}
             <div>
@@ -131,10 +164,17 @@ const Login = () => {
 
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 ${
+                    errors.email ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
+                  }`}
                 />
               </div>
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
 
             {/* PASSWORD */}
@@ -152,8 +192,12 @@ const Login = () => {
 
                 <input
                   type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"
+                  className={`w-full pl-10 pr-10 py-3 bg-gray-50 border rounded-xl focus:ring-2 focus:ring-blue-500 ${
+                    errors.password ? 'border-red-300 focus:border-red-500' : 'border-gray-200'
+                  }`}
                 />
 
                 <button
@@ -169,6 +213,9 @@ const Login = () => {
                 </button>
 
               </div>
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              )}
 
             </div>
 
@@ -190,7 +237,10 @@ const Login = () => {
             </div>
 
             {/* BUTTON */}
-            <button className="w-full py-3.5 rounded-xl text-white font-semibold bg-blue-600 hover:bg-blue-700">
+            <button 
+              type="submit"
+              className="w-full py-3.5 rounded-xl text-white font-semibold bg-blue-600 hover:bg-blue-700 transition-colors"
+            >
               Sign in
             </button>
 
