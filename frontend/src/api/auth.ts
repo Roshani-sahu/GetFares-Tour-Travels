@@ -8,4 +8,5 @@ export const authApi = {
 
 export const rbacApi = {
   myPermissions: () => apiRequest<{ permissions: string[] }>("/api/rbac/me/permissions"),
+  assignRole: (payload: { userId: string; role: string }) => apiRequest("/api/rbac/assign", { method: "POST", body: payload }),
 };
