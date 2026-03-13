@@ -1,23 +1,27 @@
-function createUsersRepository({ db, logger, schema }) {
-  return Object.freeze({
-    findAll(filters = {}) {
-      return db.findMany(schema.tableName, filters);
-    },
+class UsersRepository {
+  constructor({ db, logger, schema }) {
+    this.db = db;
+    this.logger = logger;
+    this.schema = schema;
+  }
 
-    findById(id) {
-      return db.findById(schema.tableName, id);
-    },
+  async findAll(filters = {}) {
+    return this.db.findMany(this.schema.tableName, filters);
+  }
 
-    create(payload) {
-      logger.debug({ module: 'users', payload }, 'Creating record');
-      return db.insert(schema.tableName, payload);
-    },
+  async findById(id) {
+    return this.db.findById(this.schema.tableName, id);
+  }
 
-    update(id, payload) {
-      logger.debug({ module: 'users', id, payload }, 'Updating record');
-      return db.update(schema.tableName, id, payload);
-    },
-  });
+  async create(payload) {
+    this.logger.debug({ module: 'users', payload }, 'Creating record');
+    return this.db.insert(this.schema.tableName, payload);
+  }
+
+  async update(id, payload) {
+    this.logger.debug({ module: 'users', id, payload }, 'Updating record');
+    return this.db.update(this.schema.tableName, id, payload);
+  }
 }
 
-module.exports = { createUsersRepository };
+module.exports = { UsersRepository };

@@ -1,4 +1,4 @@
-const { createCustomersController } = require('./customers.controller');
+const { CustomersController } = require('./customers.controller');
 const { createCustomersService } = require('./customers.service');
 const { createCustomersRepository } = require('./customers.repository');
 const { createCustomersRoutes } = require('./customers.routes');
