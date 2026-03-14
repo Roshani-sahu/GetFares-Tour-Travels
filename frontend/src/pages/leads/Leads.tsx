@@ -408,10 +408,13 @@ const Leads: React.FC = () => {
                         </td>
                         <td className='px-5 py-4'>
                           <div
-                            className='flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity'
+                            className='flex justify-end gap-2 transition-opacity'
                             onClick={e => e.stopPropagation()}
                           >
-                            <button className='p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors'>
+                            <button
+                              className='p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors'
+                              onClick={() => nav(`/leads/${lead.id}`)}
+                            >
                               <FaEye />
                             </button>
                             <button className='p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-green-600 hover:bg-green-50 dark:text-gray-400 dark:hover:text-green-400 dark:hover:bg-green-900/20 transition-colors'>
