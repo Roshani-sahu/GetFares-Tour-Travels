@@ -773,14 +773,6 @@ const BookingDetailPage: React.FC = () => {
       />
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8'>
-        {/* Back Button */}
-        <button
-          onClick={() => navigate('/bookings')}
-          className='mb-4 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
-        >
-          <FaArrowLeft /> Back to Bookings
-        </button>
-
         {/* Header */}
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6'>
           <div>
@@ -844,7 +836,11 @@ const BookingDetailPage: React.FC = () => {
                       icon: FaFileInvoice,
                       badge: invoices.length
                     },
-                    { id: 'history', label: 'History', icon: FaClockRotateLeft },
+                    {
+                      id: 'history',
+                      label: 'History',
+                      icon: FaClockRotateLeft
+                    },
                     { id: 'payments', label: 'Payments', icon: FaCreditCard }
                   ].map(tab => {
                     const Icon = tab.icon
