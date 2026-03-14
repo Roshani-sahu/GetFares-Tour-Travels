@@ -333,7 +333,7 @@ const QuotationDetailPage: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4'>
         {[
           {
             label: 'Total Cost',
@@ -359,9 +359,31 @@ const QuotationDetailPage: React.FC = () => {
         ].map(item => (
           <SurfaceCard
             key={item.label}
-            className='p-4 sm:p-5 hover:shadow-md transition-shadow'
+            className='p-3 sm:p-5 hover:shadow-md transition-shadow'
           >
-            <div>
+            {/* Mobile Layout */}
+            <div className='sm:hidden'>
+              <p className='text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1'>
+                {item.label}
+              </p>
+              <div className='flex items-center justify-between'>
+                <p
+                  className={`text-lg font-bold ${
+                    item.highlight
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-900 dark:text-gray-100'
+                  }`}
+                >
+                  {item.value}
+                </p>
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  {item.sub}
+                </p>
+              </div>
+            </div>
+
+            {/* Desktop Layout (unchanged) */}
+            <div className='hidden sm:block'>
               <p className='text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400'>
                 {item.label}
               </p>
