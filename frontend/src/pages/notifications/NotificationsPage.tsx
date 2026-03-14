@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNotifications } from "../../context/NotificationsContext";
-import { FaBell, FaCheck, FaCheckDouble, FaFilter, FaSearch } from "react-icons/fa";
+import { FaBell, FaCheck, FaCheckDouble, FaSearch } from "react-icons/fa";
 
 const NotificationsPage: React.FC = () => {
   const { notifications, unreadCount, markRead, markAllRead, loading } = useNotifications();
@@ -31,7 +31,7 @@ const NotificationsPage: React.FC = () => {
   };
 
   return (
-    <main className="flex-1 overflow-y-auto bg-transparent dark:bg-gray-900 ">
+    <main className="flex-1 overflow-y-auto  ">
       <div className=" mx-auto space-y-6">
         {/* Header */}
         <header className="flex items-center justify-between">

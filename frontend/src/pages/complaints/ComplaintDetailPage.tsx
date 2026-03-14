@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FaPlus } from 'react-icons/fa6'
+import { FaPlus, FaUser, FaXmark, } from 'react-icons/fa6'
+import { complaintsApi } from '../../api/complaints'
 
 interface Complaint {
   id: string
@@ -27,10 +28,12 @@ const ComplaintDetailPage: React.FC = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
-  const [error] = useState('')
+  const [error, setError] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [newNote, setNewNote] = useState('')
   const [noteError, setNoteError] = useState('')
+  const [, setStatusHistory] = useState<any[]>([])
+  const [assignmentLoading, setAssignmentLoading] = useState(false)
 
   const [complaint, setComplaint] = useState<Complaint>({
     id: id || 'CMP-001',
@@ -65,7 +68,29 @@ const ComplaintDetailPage: React.FC = () => {
   ])
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 1000)
+    const loadComplaintData = async () => {
+      if (!id) return
+      
+      try {
+        setLoading(true)
+        const [complaintRes, activitiesRes, statusHistoryRes] = await Promise.all([
+          complaintsApi.getById(id),
+          complaintsApi.listActivities(id),
+          complaintsApi.getStatusHistory(id)
+        ])
+        
+        setComplaint((complaintRes as any).data)
+        setActivities((activitiesRes as any).data || [])
+        setStatusHistory((statusHistoryRes as any).data || [])
+      } catch (error) {
+        console.error('Failed to load complaint data:', error)
+        setError('Failed to load complaint data')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadComplaintData()
   }, [id])
 
   const getStatusClass = (status: string) => {
@@ -96,49 +121,143 @@ const ComplaintDetailPage: React.FC = () => {
     }
   }
 
-  const handleStatusChange = (
+  const handleStatusChange = async (
     newStatus: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
   ) => {
-    setComplaint(prev => ({
-      ...prev,
-      status: newStatus,
-      updatedAt: new Date().toISOString()
-    }))
-
-    const newActivity: Activity = {
-      id: `act-${Date.now()}`,
-      note: `Status changed to ${newStatus}`,
-      userId: 'current-user',
-      userName: 'Current User',
-      createdAt: new Date().toISOString(),
-      type: 'STATUS_CHANGE'
+    let reason = ''
+    if (newStatus === 'CLOSED' || newStatus === 'RESOLVED') {
+      reason = window.prompt(`Please provide a reason for marking as ${newStatus}:`) || ''
+      if (!reason.trim()) {
+        setError('Reason is required for this status change')
+        return
+      }
     }
-    setActivities(prev => [newActivity, ...prev])
+    
+    try {
+      await complaintsApi.changeStatus(id!, newStatus, reason)
+      
+      setComplaint(prev => ({
+        ...prev,
+        status: newStatus,
+        updatedAt: new Date().toISOString()
+      }))
+
+      const newActivity: Activity = {
+        id: `act-${Date.now()}`,
+        note: `Status changed to ${newStatus}${reason ? `: ${reason}` : ''}`,
+        userId: 'current-user',
+        userName: 'Current User',
+        createdAt: new Date().toISOString(),
+        type: 'STATUS_CHANGE'
+      }
+      setActivities(prev => [newActivity, ...prev])
+      setError('')
+    } catch (error) {
+      console.error('Failed to update status:', error)
+      setError('Failed to update complaint status')
+    }
   }
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (!newNote.trim()) {
       setNoteError('Note cannot be empty')
       return
     }
 
-    const activity: Activity = {
-      id: `act-${Date.now()}`,
-      note: newNote,
-      userId: 'current-user',
-      userName: 'Current User',
-      createdAt: new Date().toISOString(),
-      type: 'NOTE'
-    }
+    try {
+      await complaintsApi.addActivity(id!, {
+        note: newNote,
+        type: 'NOTE'
+      })
 
-    setActivities(prev => [activity, ...prev])
-    setNewNote('')
-    setNoteError('')
-    setComplaint(prev => ({ ...prev, updatedAt: new Date().toISOString() }))
+      const activity: Activity = {
+        id: `act-${Date.now()}`,
+        note: newNote,
+        userId: 'current-user',
+        userName: 'Current User',
+        createdAt: new Date().toISOString(),
+        type: 'NOTE'
+      }
+
+      setActivities(prev => [activity, ...prev])
+      setNewNote('')
+      setNoteError('')
+      setComplaint(prev => ({ ...prev, updatedAt: new Date().toISOString() }))
+    } catch (error) {
+      console.error('Failed to add note:', error)
+      setError('Failed to add note')
+    }
   }
 
-  const handleUpdateComplaint = () => {
-    setIsEditing(false)
+  const handleAssignTo = async () => {
+    const userId = window.prompt('Enter user ID to assign to:')
+    if (!userId) return
+    
+    setAssignmentLoading(true)
+    try {
+      await complaintsApi.assignTo(id!, userId)
+      
+      const newActivity: Activity = {
+        id: `act-${Date.now()}`,
+        note: `Complaint reassigned to user ${userId}`,
+        userId: 'current-user',
+        userName: 'Current User',
+        createdAt: new Date().toISOString(),
+        type: 'ASSIGNMENT'
+      }
+      setActivities(prev => [newActivity, ...prev])
+      setError('')
+    } catch (error) {
+      console.error('Failed to assign complaint:', error)
+      setError('Failed to assign complaint')
+    } finally {
+      setAssignmentLoading(false)
+    }
+  }
+
+  const handleEscalate = async () => {
+    const reason = window.prompt('Please provide escalation reason:')
+    if (!reason?.trim()) {
+      setError('Escalation reason is required')
+      return
+    }
+    
+    try {
+      await complaintsApi.escalate(id!, reason)
+      
+      const newActivity: Activity = {
+        id: `act-${Date.now()}`,
+        note: `Complaint escalated: ${reason}`,
+        userId: 'current-user',
+        userName: 'Current User',
+        createdAt: new Date().toISOString(),
+        type: 'ESCALATION'
+      }
+      setActivities(prev => [newActivity, ...prev])
+      setError('')
+    } catch (error) {
+      console.error('Failed to escalate complaint:', error)
+      setError('Failed to escalate complaint')
+    }
+  }
+
+  const handleUpdateComplaint = async () => {
+    try {
+      await complaintsApi.update(id!, {
+        bookingId: complaint.bookingId,
+        assignedTo: complaint.assignedTo,
+        issueType: complaint.issueType,
+        description: complaint.description,
+        status: complaint.status,
+        priority: complaint.priority
+      })
+      
+      setIsEditing(false)
+      setError('')
+    } catch (error) {
+      console.error('Failed to update complaint:', error)
+      setError('Failed to update complaint')
+    }
   }
 
   const formatDate = (date: string) => {
@@ -165,7 +284,7 @@ const ComplaintDetailPage: React.FC = () => {
   }
 
   return (
-    <div className='flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 p-4 sm:p-6 lg:p-8'>
+    <div className='flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 '>
       <div className='max-w-7xl mx-auto'>
         {/* Header */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6'>
@@ -452,7 +571,7 @@ const ComplaintDetailPage: React.FC = () => {
             <div className='bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden'>
               <div className='px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50'>
                 <h3 className='text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide'>
-                  Update Status
+                  Quick Actions
                 </h3>
               </div>
               <div className='p-5 space-y-2'>
@@ -503,6 +622,25 @@ const ComplaintDetailPage: React.FC = () => {
                 >
                   Mark as CLOSED
                 </button>
+                
+                <div className='border-t border-gray-100 dark:border-gray-800 pt-3 mt-3'>
+                  <button
+                    onClick={handleAssignTo}
+                    disabled={assignmentLoading}
+                    className='w-full py-2 px-3 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 flex items-center justify-center gap-2 disabled:opacity-50'
+                  >
+                    <FaUser className='text-xs' />
+                    {assignmentLoading ? 'Assigning...' : 'Reassign'}
+                  </button>
+                  
+                  <button
+                    onClick={handleEscalate}
+                    className='w-full py-2 px-3 rounded-lg text-sm font-medium transition-colors bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-600 flex items-center justify-center gap-2 mt-2'
+                  >
+                    <FaXmark className='text-xs' />
+                    Escalate
+                  </button>
+                </div>
               </div>
             </div>
 

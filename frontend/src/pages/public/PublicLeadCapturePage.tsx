@@ -1,12 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   FaCheckCircle,
-  FaExclamationTriangle,
   FaPaperPlane,
   FaGlobe,
   FaFacebook,
   FaWhatsapp
 } from 'react-icons/fa'
+import { leadsApi } from '../../api/leads'
 
 interface FormData {
   fullName: string
@@ -26,6 +26,7 @@ const PublicLeadCapturePage: React.FC = () => {
     'idle' | 'success' | 'duplicate' | 'error'
   >('idle')
   const [loading, setLoading] = useState(false)
+  const [duplicateMessage, setDuplicateMessage] = useState('')
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
@@ -43,6 +44,32 @@ const PublicLeadCapturePage: React.FC = () => {
     email: '',
     phone: ''
   })
+
+  // Parse UTM parameters from URL on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const utmSource = urlParams.get('utm_source') || ''
+    const utmMedium = urlParams.get('utm_medium') || ''
+    const utmCampaign = urlParams.get('utm_campaign') || ''
+    const fbclid = urlParams.get('fbclid')
+    // const gclid = urlParams.get('gclid')
+    
+    // Auto-detect source based on URL parameters
+    let detectedSource: 'website' | 'meta' | 'whatsapp' | 'other' = 'website'
+    if (fbclid || utmSource?.includes('facebook') || utmSource?.includes('meta')) {
+      detectedSource = 'meta'
+    } else if (utmSource?.includes('whatsapp')) {
+      detectedSource = 'whatsapp'
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      source: detectedSource,
+      utmSource,
+      utmMedium,
+      utmCampaign
+    }))
+  }, [])
 
   const sources = [
     { value: 'website', label: 'Website', icon: FaGlobe },
@@ -89,20 +116,58 @@ const PublicLeadCapturePage: React.FC = () => {
     if (!validateForm()) return
 
     setLoading(true)
+    setStatus('idle')
 
-    // Simulate API call
-    setTimeout(() => {
-      // Randomly decide success or duplicate for demo
-      const random = Math.random()
-      if (random < 0.7) {
-        setStatus('success')
-      } else if (random < 0.9) {
+    try {
+      // Check for duplicates first
+      const duplicateCheck = await leadsApi.checkDuplicate(
+        formData.email || undefined,
+        formData.phone || undefined
+      )
+      
+      if ((duplicateCheck as any).data.isDuplicate) {
         setStatus('duplicate')
-      } else {
-        setStatus('error')
+        setDuplicateMessage((duplicateCheck as any).data.message || 'A lead with similar details already exists.')
+        setLoading(false)
+        return
       }
+
+      // Submit the lead
+      const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        destination: formData.destination,
+        notes: formData.notes,
+        source: formData.source,
+        utmSource: formData.utmSource,
+        utmMedium: formData.utmMedium,
+        utmCampaign: formData.utmCampaign,
+        isPublicCapture: true
+      }
+
+      await leadsApi.publicCapture(payload)
+      setStatus('success')
+      
+      // Reset form after successful submission
+      setFormData({
+        fullName: '',
+        email: '',
+        phone: '',
+        destination: '',
+        notes: '',
+        source: formData.source, // Keep the detected source
+        utmSource: formData.utmSource,
+        utmMedium: formData.utmMedium,
+        utmCampaign: formData.utmCampaign
+      })
+      
+    } catch (error: any) {
+      console.error('Lead capture failed:', error)
+      setStatus('error')
+    } finally {
       setLoading(false)
-    }, 1500)
+    }
   }
 
   const handleChange = (
@@ -332,12 +397,11 @@ const PublicLeadCapturePage: React.FC = () => {
 
             {status === 'duplicate' && (
               <div className='p-4 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm flex items-center gap-3'>
-                <FaExclamationTriangle className='text-lg flex-shrink-0' />
+                <FaCheckCircle className='text-lg flex-shrink-0' />
                 <div>
                   <p className='font-medium'>We already have your enquiry!</p>
                   <p className='text-xs mt-1'>
-                    A lead with similar details already exists. Our team will
-                    follow up on the existing record.
+                    {duplicateMessage || 'A lead with similar details already exists. Our team will follow up on the existing record.'}
                   </p>
                 </div>
               </div>
@@ -345,7 +409,7 @@ const PublicLeadCapturePage: React.FC = () => {
 
             {status === 'error' && (
               <div className='p-4 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm flex items-center gap-3'>
-                <FaExclamationTriangle className='text-lg flex-shrink-0' />
+                <FaPaperPlane className='text-lg flex-shrink-0' />
                 <div>
                   <p className='font-medium'>Something went wrong!</p>
                   <p className='text-xs mt-1'>

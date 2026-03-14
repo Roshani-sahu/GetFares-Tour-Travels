@@ -5,6 +5,7 @@ export const quotationsApi = {
   list: (params?: Record<string, string | number | boolean>) => apiRequest(withQuery("/api/quotations", params)),
   create: (payload: unknown) => apiRequest("/api/quotations", { method: "POST", body: payload }),
   update: (id: string, payload: unknown) => apiRequest(`/api/quotations/${id}`, { method: "PATCH", body: payload }),
+  getById: (id: string) => apiRequest(`/api/quotations/${id}`),
   generatePdf: (id: string) => apiRequest(`/api/quotations/${id}/generate-pdf`, { method: "POST" }),
   send: (id: string, payload?: unknown) => apiRequest(`/api/quotations/${id}/send`, { method: "POST", body: payload }),
   trackViewed: (id: string) => apiRequest(`/api/quotations/${id}/viewed`, { method: "POST" }),
@@ -14,5 +15,10 @@ export const quotationsApi = {
   versions: (id: string) => apiRequest(`/api/quotations/${id}/versions`),
   sendLogs: (id: string) => apiRequest(`/api/quotations/${id}/send-logs`),
   runReminders: () => apiRequest("/api/quotations/reminders/run", { method: "POST" }),
+  sendReminder: (id: string, type: 'email' | 'sms' | 'whatsapp') => 
+    apiRequest(`/api/quotations/${id}/reminder`, { method: "POST", body: { type } }),
   leadToQuoteReport: () => apiRequest("/api/quotations/reports/lead-to-quote"),
+  duplicate: (id: string) => apiRequest(`/api/quotations/${id}/duplicate`, { method: "POST" }),
+  createVersion: (id: string, changes: unknown) => 
+    apiRequest(`/api/quotations/${id}/versions`, { method: "POST", body: changes }),
 };
