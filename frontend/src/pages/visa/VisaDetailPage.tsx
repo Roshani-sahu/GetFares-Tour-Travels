@@ -90,6 +90,7 @@ const Toast = ({
       >
         {message}
       </p>
+      
     </div>
   </div>
 )
