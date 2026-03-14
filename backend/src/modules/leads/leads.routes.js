@@ -47,6 +47,14 @@ function createLeadsRoutes({ controller, validation, validateRequest, requireAut
     asyncHandler(controller.processSlaBreaches),
   );
 
+  router.post(
+    '/followups/process-non-responsive',
+    requireAuth,
+    authorize('leads:update'),
+    validateRequest(validation.processNonResponsive),
+    asyncHandler(controller.processNonResponsive),
+  );
+
   router.get('/:id', requireAuth, authorize('leads:read'), validateRequest(validation.byId), asyncHandler(controller.getById));
   router.patch('/:id', requireAuth, authorize('leads:update'), validateRequest(validation.update), asyncHandler(controller.update));
 

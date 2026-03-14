@@ -140,6 +140,9 @@ function createLeadsRepository({ db, logger, schema }) {
       fullName: row.full_name ?? row.fullName ?? null,
       phone: row.phone ?? null,
       email: row.email ?? null,
+      panNumber: row.pan_number ?? row.panNumber ?? null,
+      addressLine: row.address_line ?? row.addressLine ?? null,
+      clientCurrency: row.client_currency ?? row.clientCurrency ?? null,
       preferences: row.preferences ?? null,
       lifetimeValue: row.lifetime_value ?? row.lifetimeValue ?? 0,
       segment: row.segment ?? 'NEW',
@@ -162,9 +165,18 @@ function createLeadsRepository({ db, logger, schema }) {
       fullName: customer?.fullName ?? row.full_name ?? row.fullName ?? null,
       phone: customer?.phone ?? row.phone ?? null,
       email: customer?.email ?? row.email ?? null,
+      panNumber: customer?.panNumber ?? row.pan_number ?? row.panNumber ?? null,
+      addressLine: customer?.addressLine ?? row.address_line ?? row.addressLine ?? null,
+      clientCurrency: customer?.clientCurrency ?? row.client_currency ?? row.clientCurrency ?? null,
+      nationality: row.nationality ?? null,
       destinationId: row.destination_id ?? row.destinationId ?? null,
       travelDate: row.travel_date ?? row.travelDate ?? null,
       budget: row.budget ?? null,
+      adultsCount: row.adults_count ?? row.adultsCount ?? 1,
+      childrenCount: row.children_count ?? row.childrenCount ?? 0,
+      visaRequired: row.visa_required ?? row.visaRequired ?? false,
+      leadType: row.lead_type ?? row.leadType ?? 'HOLIDAY',
+      travelPurpose: row.travel_purpose ?? row.travelPurpose ?? null,
       source: row.source ?? null,
       campaignId: row.campaign_id ?? row.campaignId ?? null,
       utmSource: row.utm_source ?? row.utmSource ?? null,
@@ -183,6 +195,11 @@ function createLeadsRepository({ db, logger, schema }) {
       qualificationCompleted: row.qualification_completed ?? row.qualificationCompleted ?? false,
       closedReason: row.closed_reason ?? row.closedReason ?? null,
       nextFollowupDate: row.next_followup_date ?? row.nextFollowupDate ?? null,
+      subStatus: row.sub_status ?? row.subStatus ?? null,
+      temperature: row.temperature ?? null,
+      followupAttempts: row.followup_attempts ?? row.followupAttempts ?? 0,
+      finalReminderAt: row.final_reminder_at ?? row.finalReminderAt ?? null,
+      nonResponsiveMarkedAt: row.non_responsive_marked_at ?? row.nonResponsiveMarkedAt ?? null,
       isDeleted: row.is_deleted ?? row.isDeleted ?? false,
       createdAt: row.created_at ?? row.createdAt ?? null,
       updatedAt: row.updated_at ?? row.updatedAt ?? null,
@@ -265,6 +282,18 @@ function createLeadsRepository({ db, logger, schema }) {
 
     if (filters.source) {
       mapped.source = filters.source;
+    }
+
+    if (filters.temperature) {
+      mapped.temperature = filters.temperature;
+    }
+
+    if (filters.subStatus) {
+      mapped.sub_status = filters.subStatus;
+    }
+
+    if (filters.leadType) {
+      mapped.lead_type = filters.leadType;
     }
 
     if (filters.assignedTo) {
@@ -370,6 +399,9 @@ function createLeadsRepository({ db, logger, schema }) {
       full_name: fullName,
       phone: normalizePhone(payload.phone),
       email: normalizeEmail(payload.email),
+      pan_number: payload.panNumber || null,
+      address_line: payload.addressLine || null,
+      client_currency: payload.clientCurrency || null,
       preferences: payload.preferences || null,
       lifetime_value: payload.lifetimeValue ?? 0,
       segment: payload.segment || 'NEW',
@@ -413,6 +445,15 @@ function createLeadsRepository({ db, logger, schema }) {
 
     if (payload.segment !== undefined) {
       mapped.segment = payload.segment;
+    }
+    if (payload.panNumber !== undefined) {
+      mapped.pan_number = payload.panNumber;
+    }
+    if (payload.addressLine !== undefined) {
+      mapped.address_line = payload.addressLine;
+    }
+    if (payload.clientCurrency !== undefined) {
+      mapped.client_currency = payload.clientCurrency;
     }
 
     if (!Object.keys(mapped).length) {
@@ -525,13 +566,26 @@ function createLeadsRepository({ db, logger, schema }) {
         phone: payload.phone,
       });
 
-      if (existing) {
-        const needsNameBackfill = !existing.fullName && payload.fullName;
-        if (needsNameBackfill) {
-          return updateCustomer(existing.id, { fullName: payload.fullName });
-        }
-        return existing;
+    if (existing) {
+      const patch = {};
+      if (!existing.fullName && payload.fullName) {
+        patch.fullName = payload.fullName;
       }
+      if (!existing.panNumber && payload.panNumber) {
+        patch.panNumber = payload.panNumber;
+      }
+      if (!existing.addressLine && payload.addressLine) {
+        patch.addressLine = payload.addressLine;
+      }
+      if (!existing.clientCurrency && payload.clientCurrency) {
+        patch.clientCurrency = payload.clientCurrency;
+      }
+
+      if (Object.keys(patch).length) {
+        return updateCustomer(existing.id, patch);
+      }
+      return existing;
+    }
 
       return createCustomer(payload);
     },
@@ -728,6 +782,46 @@ function createLeadsRepository({ db, logger, schema }) {
         .slice(0, normalizedLimit);
 
       return mapRowsToDomain(breached);
+    },
+
+    async findNonResponsiveCandidates({ staleDays = 4, limit = 100 } = {}) {
+      const normalizedLimit = toPositiveInt(limit, 100);
+      const normalizedStaleDays = toPositiveInt(staleDays, 4, 30);
+      const cutoff = Date.now() - normalizedStaleDays * 24 * 60 * 60 * 1000;
+
+      const rows = await db.findMany(schema.tableName, {});
+      const candidates = rows
+        .filter((row) => {
+          const status = String(row.status || '').toUpperCase();
+          if (['CONVERTED', 'LOST', 'NON_RESPONSIVE'].includes(status)) {
+            return false;
+          }
+
+          const responseAt = row.response_at ?? row.responseAt ?? null;
+          if (responseAt) {
+            return false;
+          }
+
+          const markedAt = row.non_responsive_marked_at ?? row.nonResponsiveMarkedAt ?? null;
+          if (markedAt) {
+            return false;
+          }
+
+          const createdAt = toDate(row.created_at ?? row.createdAt);
+          if (!createdAt || createdAt.getTime() > cutoff) {
+            return false;
+          }
+
+          return true;
+        })
+        .sort((a, b) => {
+          const left = toDate(a.created_at ?? a.createdAt)?.getTime() || 0;
+          const right = toDate(b.created_at ?? b.createdAt)?.getTime() || 0;
+          return left - right;
+        })
+        .slice(0, normalizedLimit);
+
+      return mapRowsToDomain(candidates);
     },
 
     async markSlaBreached(id) {

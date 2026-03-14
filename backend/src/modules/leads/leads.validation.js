@@ -1,6 +1,7 @@
 const { z } = require('zod');
 
-const leadStatus = z.enum(['OPEN', 'CONTACTED', 'WIP', 'QUOTED', 'FOLLOW_UP', 'CONVERTED', 'LOST']);
+const leadStatus = z.enum(['OPEN', 'CONTACTED', 'WIP', 'QUOTED', 'FOLLOW_UP', 'CONVERTED', 'LOST', 'NON_RESPONSIVE']);
+const leadType = z.enum(['HOLIDAY', 'VISA', 'BOTH']);
 
 const dateTimeString = z.string().refine((value) => !Number.isNaN(new Date(value).getTime()), {
   message: 'Invalid date-time',
@@ -8,6 +9,7 @@ const dateTimeString = z.string().refine((value) => !Number.isNaN(new Date(value
 
 const basePayload = z.object({
   fullName: z.string().min(2),
+  nationality: z.string().min(2).max(80).optional(),
   phone: z.string().min(6).max(20).optional(),
   email: z.string().email().optional(),
   panNumber: z.string().min(8).max(20).optional(),
@@ -21,6 +23,12 @@ const basePayload = z.object({
   utmSource: z.string().max(100).optional(),
   utmMedium: z.string().max(100).optional(),
   utmCampaign: z.string().max(100).optional(),
+  adultsCount: z.coerce.number().int().min(0).optional(),
+  childrenCount: z.coerce.number().int().min(0).optional(),
+  visaRequired: z.boolean().optional(),
+  leadType: leadType.optional(),
+  travelPurpose: z.string().max(50).optional(),
+  subStatus: z.string().max(60).optional(),
   respondedPositively: z.boolean().optional(),
   priorityLevel: z.coerce.number().int().nonnegative().optional(),
   isVip: z.boolean().optional(),
@@ -72,6 +80,9 @@ const list = z.object({
       limit: z.coerce.number().int().positive().optional(),
       status: leadStatus.optional(),
       source: z.string().optional(),
+      temperature: z.enum(['HOT', 'WARM', 'COLD']).optional(),
+      subStatus: z.string().max(60).optional(),
+      leadType: leadType.optional(),
       assignedTo: z.string().uuid().optional(),
       email: z.string().email().optional(),
       phone: z.string().optional(),
@@ -119,6 +130,7 @@ const createFollowup = z.object({
   body: z.object({
     userId: z.string().uuid().optional(),
     followupType: z.enum(['CALL', 'WHATSAPP', 'EMAIL', 'FINAL_REMINDER', 'TASK']).optional(),
+    followupNumber: z.coerce.number().int().min(1).max(4).optional(),
     followupDate: dateTimeString,
     notes: z.string().max(2000).optional(),
   }),
@@ -156,6 +168,17 @@ const processSlaBreaches = z.object({
   query: z.object({}).optional(),
 });
 
+const processNonResponsive = z.object({
+  body: z
+    .object({
+      staleDays: z.coerce.number().int().positive().max(30).optional(),
+      limit: z.coerce.number().int().positive().max(500).optional(),
+    })
+    .optional(),
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
+});
+
 module.exports = {
   LeadsValidation: {
     create,
@@ -169,5 +192,6 @@ module.exports = {
     listOverdueFollowups,
     processOverdueFollowups,
     processSlaBreaches,
+    processNonResponsive,
   },
 };

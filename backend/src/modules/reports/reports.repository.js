@@ -752,7 +752,7 @@ function createReportsRepository({ db, schema }) {
         rows.map((row) => [row.status, toNumber(row.total, 0)]),
       );
 
-      const stages = ['OPEN', 'CONTACTED', 'WIP', 'QUOTED', 'FOLLOW_UP', 'CONVERTED', 'LOST'];
+      const stages = ['OPEN', 'CONTACTED', 'WIP', 'QUOTED', 'FOLLOW_UP', 'CONVERTED', 'LOST', 'NON_RESPONSIVE'];
       const totalLeads = stages.reduce((sum, stage) => sum + (statusMap.get(stage) || 0), 0);
 
       const funnel = stages.map((stage) => {

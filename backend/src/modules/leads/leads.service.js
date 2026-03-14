@@ -7,7 +7,9 @@ const LEAD_TEMPERATURE = Object.freeze({
 });
 
 const POSITIVE_RESPONSE_STATUSES = new Set(['CONTACTED', 'WIP', 'QUOTED', 'FOLLOW_UP', 'CONVERTED']);
-const CLOSED_STATUSES = new Set(['CONVERTED', 'LOST']);
+const CLOSED_STATUSES = new Set(['CONVERTED', 'LOST', 'NON_RESPONSIVE']);
+const NON_RESPONSIVE_STATUS = 'NON_RESPONSIVE';
+const MANDATORY_FOLLOWUP_ATTEMPTS = 5; // FU1..FU4 + final reminder
 
 const AUTOMATION_DEFAULTS = Object.freeze({
   highBudgetThreshold: 150000,
@@ -32,6 +34,18 @@ function createLeadsService({ repository, logger, events }) {
 
   function normalizePhone(phone) {
     return repository.normalizePhone(phone);
+  }
+
+  function normalizeLeadType(value) {
+    if (!value) {
+      return 'HOLIDAY';
+    }
+
+    const normalized = String(value).trim().toUpperCase();
+    if (['HOLIDAY', 'VISA', 'BOTH'].includes(normalized)) {
+      return normalized;
+    }
+    return 'HOLIDAY';
   }
 
   function mapTemperatureToPriority(temperature) {
@@ -92,14 +106,16 @@ function createLeadsService({ repository, logger, events }) {
       return lead;
     }
 
+    const derivedTemperature = determineLeadTemperature({
+      travelDate: lead.travelDate,
+      budget: lead.budget,
+      status: lead.status,
+      respondedPositively: override.respondedPositively,
+    });
+
     return {
       ...lead,
-      temperature: determineLeadTemperature({
-        travelDate: lead.travelDate,
-        budget: lead.budget,
-        status: lead.status,
-        respondedPositively: override.respondedPositively,
-      }),
+      temperature: lead.temperature || derivedTemperature,
     };
   }
 
@@ -115,9 +131,23 @@ function createLeadsService({ repository, logger, events }) {
     const temperature = determineLeadTemperature(payload);
 
     const mapped = {
+      full_name: payload.fullName || null,
+      phone: normalizePhone(payload.phone),
+      email: normalizeEmail(payload.email),
+      pan_number: payload.panNumber || null,
+      address_line: payload.addressLine || null,
+      client_currency: payload.clientCurrency || null,
       destination_id: payload.destinationId || null,
+      nationality: payload.nationality || null,
       travel_date: payload.travelDate || null,
       budget: payload.budget ?? null,
+      adults_count: payload.adultsCount ?? 1,
+      children_count: payload.childrenCount ?? 0,
+      visa_required: payload.visaRequired ?? false,
+      lead_type: normalizeLeadType(payload.leadType),
+      travel_purpose: payload.travelPurpose || null,
+      sub_status: payload.subStatus || null,
+      temperature,
       source: payload.source || 'Manual',
       campaign_id: payload.campaignId || null,
       utm_source: payload.utmSource || null,
@@ -132,14 +162,13 @@ function createLeadsService({ repository, logger, events }) {
       qualification_completed: payload.qualificationCompleted ?? false,
       closed_reason: payload.closedReason || null,
       next_followup_date: payload.nextFollowupDate || null,
+      followup_attempts: 0,
+      final_reminder_at: null,
+      non_responsive_marked_at: null,
     };
 
     if (useCustomerLinking) {
       mapped.customer_id = customerId;
-    } else {
-      mapped.full_name = payload.fullName;
-      mapped.phone = normalizePhone(payload.phone);
-      mapped.email = normalizeEmail(payload.email);
     }
 
     return mapped;
@@ -150,20 +179,30 @@ function createLeadsService({ repository, logger, events }) {
     const now = new Date().toISOString();
     const mapped = {};
 
-    if (!useCustomerLinking) {
-      if (payload.fullName !== undefined) {
-        mapped.full_name = payload.fullName;
-      }
-      if (payload.phone !== undefined) {
-        mapped.phone = normalizePhone(payload.phone);
-      }
-      if (payload.email !== undefined) {
-        mapped.email = normalizeEmail(payload.email);
-      }
+    if (payload.fullName !== undefined) {
+      mapped.full_name = payload.fullName;
+    }
+    if (payload.phone !== undefined) {
+      mapped.phone = normalizePhone(payload.phone);
+    }
+    if (payload.email !== undefined) {
+      mapped.email = normalizeEmail(payload.email);
+    }
+    if (payload.panNumber !== undefined) {
+      mapped.pan_number = payload.panNumber;
+    }
+    if (payload.addressLine !== undefined) {
+      mapped.address_line = payload.addressLine;
+    }
+    if (payload.clientCurrency !== undefined) {
+      mapped.client_currency = payload.clientCurrency;
     }
 
     if (payload.destinationId !== undefined) {
       mapped.destination_id = payload.destinationId;
+    }
+    if (payload.nationality !== undefined) {
+      mapped.nationality = payload.nationality;
     }
     if (payload.travelDate !== undefined) {
       mapped.travel_date = payload.travelDate;
@@ -185,6 +224,24 @@ function createLeadsService({ repository, logger, events }) {
     }
     if (payload.utmCampaign !== undefined) {
       mapped.utm_campaign = payload.utmCampaign;
+    }
+    if (payload.adultsCount !== undefined) {
+      mapped.adults_count = payload.adultsCount;
+    }
+    if (payload.childrenCount !== undefined) {
+      mapped.children_count = payload.childrenCount;
+    }
+    if (payload.visaRequired !== undefined) {
+      mapped.visa_required = payload.visaRequired;
+    }
+    if (payload.leadType !== undefined) {
+      mapped.lead_type = normalizeLeadType(payload.leadType);
+    }
+    if (payload.travelPurpose !== undefined) {
+      mapped.travel_purpose = payload.travelPurpose;
+    }
+    if (payload.subStatus !== undefined) {
+      mapped.sub_status = payload.subStatus;
     }
     if (payload.priorityLevel !== undefined) {
       mapped.priority_level = payload.priorityLevel;
@@ -223,7 +280,9 @@ function createLeadsService({ repository, logger, events }) {
         status: payload.status ?? existing.status,
         respondedPositively: payload.respondedPositively,
       };
-      mapped.priority_level = mapTemperatureToPriority(determineLeadTemperature(mergedLead));
+      const nextTemperature = determineLeadTemperature(mergedLead);
+      mapped.priority_level = mapTemperatureToPriority(nextTemperature);
+      mapped.temperature = nextTemperature;
     }
 
     return mapped;
@@ -414,6 +473,9 @@ function createLeadsService({ repository, logger, events }) {
         fullName: payload.fullName,
         phone: payload.phone,
         email: payload.email,
+        panNumber: payload.panNumber,
+        addressLine: payload.addressLine,
+        clientCurrency: payload.clientCurrency,
       });
     }
 
@@ -568,21 +630,42 @@ function createLeadsService({ repository, logger, events }) {
 
     async createFollowup(leadId, payload, context = {}) {
       const lead = await getById(leadId, context);
+      const currentAttempts = Number(lead.followupAttempts || 0);
+      if (currentAttempts >= MANDATORY_FOLLOWUP_ATTEMPTS) {
+        throw new AppError(
+          409,
+          'Maximum follow-up attempts reached for this lead. Use status update flow.',
+          'LEAD_FOLLOWUP_LIMIT_REACHED',
+        );
+      }
+
+      const nextAttempt = currentAttempts + 1;
+      const normalizedType = payload.followupType
+        || (nextAttempt >= MANDATORY_FOLLOWUP_ATTEMPTS ? 'FINAL_REMINDER' : 'CALL');
 
       const followup = await repository.createFollowup({
         leadId: lead.id,
         userId: payload.userId || context.user?.id || lead.assignedTo || null,
-        followupType: payload.followupType,
+        followupType: normalizedType,
         followupDate: payload.followupDate,
         notes: payload.notes,
       });
 
       const followupDate = new Date(followup.followupDate);
+      const updatePayload = {
+        followup_attempts: nextAttempt,
+        sub_status: nextAttempt >= MANDATORY_FOLLOWUP_ATTEMPTS ? 'FINAL_REMINDER' : `FOLLOW_UP_${nextAttempt}`,
+      };
+
       if (!Number.isNaN(followupDate.getTime())) {
-        await repository.update(lead.id, {
-          next_followup_date: followupDate.toISOString().slice(0, 10),
-        });
+        updatePayload.next_followup_date = followupDate.toISOString().slice(0, 10);
       }
+
+      if (normalizedType === 'FINAL_REMINDER' || nextAttempt >= MANDATORY_FOLLOWUP_ATTEMPTS) {
+        updatePayload.final_reminder_at = new Date().toISOString();
+      }
+
+      await repository.update(lead.id, updatePayload);
 
       await repository.createActivity({
         leadId: lead.id,
@@ -612,6 +695,51 @@ function createLeadsService({ repository, logger, events }) {
         processed: overdue.length,
         followups: overdue,
       };
+    },
+
+    async processNonResponsive(payload = {}, context = {}) {
+      const staleDays = toPositiveInt(payload.staleDays, 4, 30);
+      const limit = toPositiveInt(payload.limit, AUTOMATION_DEFAULTS.overdueFollowupLimit);
+      const candidates = await repository.findNonResponsiveCandidates({ staleDays, limit });
+
+      const summary = {
+        processed: candidates.length,
+        marked: 0,
+        skipped: 0,
+        leadIds: [],
+      };
+
+      for (const lead of candidates) {
+        if (Number(lead.followupAttempts || 0) < MANDATORY_FOLLOWUP_ATTEMPTS) {
+          summary.skipped += 1;
+          continue;
+        }
+
+        const nowIso = new Date().toISOString();
+        await repository.update(lead.id, {
+          status: NON_RESPONSIVE_STATUS,
+          sub_status: 'AUTO_NON_RESPONSIVE',
+          non_responsive_marked_at: nowIso,
+          updated_at: nowIso,
+        });
+
+        await repository.createActivity({
+          leadId: lead.id,
+          userId: context.user?.id || null,
+          activityType: 'LEAD_NON_RESPONSIVE',
+          notes: `Auto-marked NON_RESPONSIVE after ${staleDays} day(s) and follow-up compliance`,
+        });
+
+        events.emitEscalated({
+          leadId: lead.id,
+          reason: 'AUTO_NON_RESPONSIVE',
+        });
+
+        summary.marked += 1;
+        summary.leadIds.push(lead.id);
+      }
+
+      return summary;
     },
 
     async processSlaBreaches(payload = {}, context = {}) {
@@ -654,6 +782,16 @@ function createLeadsService({ repository, logger, events }) {
 
     async update(id, payload, context = {}) {
       const existing = await getById(id, context);
+      if (payload.status === 'LOST' || payload.status === NON_RESPONSIVE_STATUS) {
+        const attempts = Number(existing.followupAttempts || 0);
+        if (attempts < MANDATORY_FOLLOWUP_ATTEMPTS) {
+          throw new AppError(
+            409,
+            `Minimum ${MANDATORY_FOLLOWUP_ATTEMPTS} follow-up attempts are required before closing lead.`,
+            'LEAD_FOLLOWUP_COMPLIANCE_REQUIRED',
+          );
+        }
+      }
       const useCustomerLinking = await repository.hasLeadCustomerColumn();
       const customerPatch = {};
 
@@ -667,6 +805,15 @@ function createLeadsService({ repository, logger, events }) {
 
       if (payload.email !== undefined) {
         customerPatch.email = normalizeEmail(payload.email);
+      }
+      if (payload.panNumber !== undefined) {
+        customerPatch.panNumber = payload.panNumber;
+      }
+      if (payload.addressLine !== undefined) {
+        customerPatch.addressLine = payload.addressLine;
+      }
+      if (payload.clientCurrency !== undefined) {
+        customerPatch.clientCurrency = payload.clientCurrency;
       }
 
       if (useCustomerLinking && Object.keys(customerPatch).length && existing.customerId) {

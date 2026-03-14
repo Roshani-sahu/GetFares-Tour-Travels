@@ -54,6 +54,11 @@ function createLeadsController({ service }) {
       const result = await service.processSlaBreaches(req.validated.body || {}, req.context);
       res.status(200).json({ data: result });
     },
+
+    async processNonResponsive(req, res) {
+      const result = await service.processNonResponsive(req.validated.body || {}, req.context);
+      res.status(200).json({ data: result });
+    },
   });
 }
 

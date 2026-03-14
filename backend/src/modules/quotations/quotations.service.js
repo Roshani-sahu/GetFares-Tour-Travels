@@ -404,7 +404,7 @@ function createQuotationsService({ repository, logger, events }) {
     return updated;
   }
 
-  async function send(id, _payload = {}, context = {}) {
+  async function send(id, payload = {}, context = {}) {
     assertAuthenticatedUser(context.user);
 
     let quotation = await getById(id, context, { includeItems: true });
@@ -638,12 +638,12 @@ function createQuotationsService({ repository, logger, events }) {
 
     async listVersions(id, context = {}) {
       await getById(id, context, { includeItems: false });
-      return [];
+      return repository.findVersionLogsByQuotationId(id);
     },
 
     async listSendLogs(id, context = {}) {
       await getById(id, context, { includeItems: false });
-      return [];
+      return repository.findSendLogsByQuotationId(id);
     },
 
     async runReminderAutomation(payload = {}, context = {}) {
@@ -705,8 +705,9 @@ function createQuotationsService({ repository, logger, events }) {
       return repository.getLeadToQuoteReport(filters);
     },
 
-    async listTemplates() {
-      return [];
+    async listTemplates(filters = {}, context = {}) {
+      logger.debug({ module: 'quotations', requestId: context.requestId, filters }, 'List quotation templates');
+      return repository.findTemplates(filters);
     },
 
     async createTemplate(payload, context = {}) {

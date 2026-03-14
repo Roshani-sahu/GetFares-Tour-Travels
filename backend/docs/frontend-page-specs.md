@@ -21,6 +21,25 @@ This version includes:
 5. Finance mapping coverage.
 6. API readiness and gap visibility.
 
+## 2.1 Simple Client-Readable Flow (Requested Format)
+1. Dashboard shows overall business analysis: total leads, conversions, revenue, profit, SLA, source trends, team activity.
+2. Leads are captured automatically from Meta/Website/WhatsApp and can also be created manually by staff.
+3. Leads appear in the Leads Board/List with filters, quick status updates, and auto assignment.
+4. Lead detail page shows full customer info, travel requirements, SLA timer, activity timeline, and follow-up scheduler.
+5. Follow-ups are mandatory (FU1 to FU4 + final reminder) with auto reminders and escalation on delay.
+6. Quotation builder lets consultants select template, add components, and auto calculate margin, tax, and final price.
+7. Quotation can be sent via WhatsApp/Email with PDF link, view tracking, and reminder automation.
+8. Approved quotation converts to booking with booking number, travel dates, and payment rules enforced.
+9. Payments are recorded and verified by accounts; invoices can be generated; refund workflows are tracked.
+10. Visa module tracks case status, appointments, documents, and checklist completion before travel.
+11. Customer profile shows history of leads, quotations, bookings, visa cases, and segmentation tags.
+12. Campaigns module tracks lead source performance, cost per lead, ROI, and conversion metrics.
+13. Reports hub provides lead, sales, payment, visa, and management KPI reports with exports.
+14. Supplier onboarding captures PAN/GST, bank details, contracts, and payment deadlines.
+15. Package publishing module manages holiday packages and syncs to website with publish/unpublish controls.
+16. Integration settings store Meta, WhatsApp, SMTP credentials and show webhook health.
+17. Notifications center shows system alerts, SLA breaches, and assigned lead updates.
+
 ## 3. Role and Access Matrix
 | Role | Primary Access |
 | --- | --- |
