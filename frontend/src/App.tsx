@@ -26,6 +26,7 @@ import BookingDetailPage from "./pages/Booking/BookingDetailPage";
 import CampaignsPage from "./pages/campaigns/CampaignsPage";
 import CustomersPage from "./pages/customers/CustomersPage";
 import CustomerDetailPage from "./pages/customers/CustomerDetailPage";
+import NewCustomerPage from "./pages/customers/NewCustomerPage";
 import ComplaintDetailPage from "./pages/complaints/ComplaintDetailPage";
 import NotificationsPage from "./pages/notifications/NotificationsPage";
 import UsersPage from "./pages/users/UsersPage";
@@ -79,6 +80,7 @@ function App() {
             <Route path="/campaigns" element={<CampaignsPage />} />
 
             <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/customers/new" element={<NewCustomerPage />} />
             <Route path="/customers/:id" element={<CustomerDetailPage />} />
 
             <Route path="/notifications" element={<NotificationsPage />} />

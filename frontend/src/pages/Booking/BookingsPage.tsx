@@ -13,10 +13,15 @@ import {
   FaPaperPlane,
   FaPlus,
   FaTriangleExclamation,
+  // FaFileText,
+  FaMoneyBillWave,
+  FaEnvelope,
+  
 } from "react-icons/fa6";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import EmptyState from "../../components/ui/EmptyState";
 import { validateBookingTransition } from "../../utils/workflowValidation";
+import { bookingsApi } from "../../api/bookings";
 
 type BookingStatus = "confirmed" | "pending" | "cancelled";
 type PaymentStatus = "partial" | "unpaid" | "paid" | "refunded";
@@ -109,7 +114,55 @@ const BookingsPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const pageSize = 4;
+
+  const handleGenerateInvoice = async (bookingId: string) => {
+    setLoading(true);
+    try {
+      await bookingsApi.generateInvoice(bookingId);
+      console.log(`Invoice generated for booking ${bookingId}`);
+    } catch (error) {
+      console.error('Failed to generate invoice:', error);
+      setError('Failed to generate invoice');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendConfirmation = async (bookingId: string) => {
+    setLoading(true);
+    try {
+      await bookingsApi.sendConfirmation(bookingId);
+      console.log(`Confirmation sent for booking ${bookingId}`);
+    } catch (error) {
+      console.error('Failed to send confirmation:', error);
+      setError('Failed to send confirmation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRecordPayment = async (bookingId: string) => {
+    const amount = window.prompt('Enter payment amount:');
+    if (!amount) return;
+    
+    setLoading(true);
+    try {
+      await bookingsApi.recordPayment(bookingId, {
+        amount: parseFloat(amount),
+        method: 'manual',
+        notes: 'Manual payment entry'
+      });
+      console.log(`Payment recorded for booking ${bookingId}`);
+      // Refresh booking data
+    } catch (error) {
+      console.error('Failed to record payment:', error);
+      setError('Failed to record payment');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     return bookings.filter((booking) => {
@@ -245,24 +298,95 @@ const BookingsPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-5 py-4">
-                        <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${paymentClasses[booking.payment]}`}>
-                          {booking.payment}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${paymentClasses[booking.payment]}`}>
+                            {booking.payment}
+                          </span>
+                          {booking.payment === 'partial' || booking.payment === 'unpaid' ? (
+                            <button 
+                              onClick={() => handleRecordPayment(booking.id)}
+                              className="text-xs text-blue-600 hover:text-blue-800 underline"
+                              title="Record Payment"
+                            >
+                              +Pay
+                            </button>
+                          ) : null}
+                        </div>
                         <p className="mt-1 text-xs text-gray-500">${booking.paid.toLocaleString()} / ${booking.total.toLocaleString()}</p>
+                        <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+                          <div 
+                            className="bg-green-600 h-1.5 rounded-full" 
+                            style={{ width: `${(booking.paid / booking.total) * 100}%` }}
+                          ></div>
+                        </div>
                       </td>
                       <td className="px-5 py-4">
-                        <p className="text-xs text-gray-600 dark:text-gray-300">{booking.documentsReady}/{booking.documentsTotal} ready</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs ${booking.documentsReady === booking.documentsTotal ? 'text-green-600' : 'text-amber-600'}`}>
+                            {booking.documentsReady}/{booking.documentsTotal} ready
+                          </span>
+                          <button 
+                            onClick={() => navigate(`/bookings/${booking.id}/documents`)}
+                            className="text-xs text-blue-600 hover:text-blue-800 underline"
+                            title="View Documents"
+                          >
+                            View
+                          </button>
+                        </div>
+                        {booking.documentsReady < booking.documentsTotal && (
+                          <p className="text-xs text-red-500 mt-1">Missing {booking.documentsTotal - booking.documentsReady} docs</p>
+                        )}
                       </td>
                       <td className="px-5 py-4">
-                        <div className="flex justify-end gap-2 transition-all duration-200">
+                        <div className="flex justify-end gap-1 transition-all duration-200">
                           <button
                             className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                             onClick={() => navigate(`/bookings/${booking.id}`)}
+                            title="View Details"
                           >
                             <FaEye />
                           </button>
-                          <button className="rounded-lg border border-gray-200 p-2 text-blue-600 hover:bg-blue-50 dark:border-gray-700 dark:hover:bg-blue-900/20"><FaFileInvoiceDollar /></button>
-                          <button onClick={cancelBooking} className="rounded-lg border border-gray-200 p-2 text-green-600 hover:bg-green-50 dark:border-gray-700 dark:hover:bg-green-900/20"><FaPaperPlane /></button>
+                          <button 
+                            onClick={() => handleGenerateInvoice(booking.id)}
+                            disabled={loading}
+                            className="rounded-lg border border-gray-200 p-2 text-blue-600 hover:bg-blue-50 dark:border-gray-700 dark:hover:bg-blue-900/20 disabled:opacity-50"
+                            title="Generate Invoice"
+                          >
+                            <FaFileInvoiceDollar />
+                          </button>
+                          <button 
+                            onClick={() => handleSendConfirmation(booking.id)}
+                            disabled={loading}
+                            className="rounded-lg border border-gray-200 p-2 text-green-600 hover:bg-green-50 dark:border-gray-700 dark:hover:bg-green-900/20 disabled:opacity-50"
+                            title="Send Confirmation"
+                          >
+                            <FaPaperPlane />
+                          </button>
+                          <div className="relative group">
+                            <button className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
+                              <FaEnvelope />
+                            </button>
+                            <div className="absolute right-0 top-full mt-1 hidden group-hover:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 min-w-[120px]">
+                              <button 
+                                onClick={() => navigate(`/bookings/${booking.id}/documents`)}
+                                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                              >
+                                <FaEnvelope /> Documents
+                              </button>
+                              <button 
+                                onClick={() => navigate(`/bookings/${booking.id}/payments`)}
+                                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                              >
+                                <FaMoneyBillWave /> Payments
+                              </button>
+                              <button 
+                                onClick={cancelBooking}
+                                className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+                              >
+                                Cancel Booking
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </td>
                     </tr>

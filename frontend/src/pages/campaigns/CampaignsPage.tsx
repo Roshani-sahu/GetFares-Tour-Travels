@@ -282,23 +282,37 @@ const CampaignsPage: React.FC = () => {
     setShowCreateModal(true)
   }
 
-  const handleDeleteCampaign = (id: string) => {
+  const handleDeleteCampaign = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this campaign?')) {
-      setCampaigns(prev => prev.filter(c => c.id !== id))
+      try {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 500))
+        setCampaigns(prev => prev.filter(c => c.id !== id))
+      } catch (error) {
+        console.error('Failed to delete campaign:', error)
+        setError('Failed to delete campaign')
+      }
     }
   }
 
-  const handleDuplicateCampaign = (campaign: Campaign) => {
-    const newCampaign: Campaign = {
-      ...campaign,
-      id: Date.now().toString(),
-      name: `${campaign.name} (Copy)`,
-      status: 'DRAFT',
-      leadsGenerated: 0,
-      revenueGenerated: 0,
-      actualSpend: 0
+  const handleDuplicateCampaign = async (campaign: Campaign) => {
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500))
+      const newCampaign: Campaign = {
+        ...campaign,
+        id: Date.now().toString(),
+        name: `${campaign.name} (Copy)`,
+        status: 'DRAFT',
+        leadsGenerated: 0,
+        revenueGenerated: 0,
+        actualSpend: 0
+      }
+      setCampaigns(prev => [newCampaign, ...prev])
+    } catch (error) {
+      console.error('Failed to duplicate campaign:', error)
+      setError('Failed to duplicate campaign')
     }
-    setCampaigns(prev => [newCampaign, ...prev])
   }
 
   const validateForm = () => {
@@ -338,48 +352,69 @@ const CampaignsPage: React.FC = () => {
     return isValid
   }
 
-  const handleSubmitCampaign = () => {
+  const handleSubmitCampaign = async () => {
     if (!validateForm()) return
 
     setLoading(true)
-    setTimeout(() => {
+    setError('')
+    
+    try {
+      // Validate date range
+      if (formData.endDate <= formData.startDate) {
+        throw new Error('End date must be after start date')
+      }
+      
+      const now = new Date()
+      const startDate = new Date(formData.startDate)
+      const endDate = new Date(formData.endDate)
+      
+      if (startDate < now && endDate < now) {
+        throw new Error('Campaign dates cannot be in the past')
+      }
+      
+      const payload = {
+        name: formData.name,
+        source: formData.source,
+        budget: parseFloat(formData.budget) || 0,
+        metaCampaignId: formData.metaCampaignId || undefined,
+        metaAdsetId: formData.metaAdsetId || undefined,
+        metaAdId: formData.metaAdId || undefined,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        status: formData.status as Campaign['status']
+      }
+      
+      // Simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       if (editingCampaign) {
         setCampaigns(prev =>
           prev.map(c =>
             c.id === editingCampaign.id
-              ? {
-                  ...c,
-                  ...formData,
-                  budget: parseFloat(formData.budget) || 0
-                }
+              ? { ...c, ...payload }
               : c
           )
         )
       } else {
         const newCampaign: Campaign = {
           id: Date.now().toString(),
-          name: formData.name,
-          source: formData.source,
-          budget: parseFloat(formData.budget) || 0,
+          ...payload,
           actualSpend: 0,
           leadsGenerated: 0,
           revenueGenerated: 0,
-          metaCampaignId: formData.metaCampaignId || undefined,
-          metaAdsetId: formData.metaAdsetId || undefined,
-          metaAdId: formData.metaAdId || undefined,
-          startDate: formData.startDate,
-          endDate: formData.endDate,
-          status: formData.status as any,
           roi: 0,
           conversionRate: 0
         }
         setCampaigns(prev => [newCampaign, ...prev])
       }
 
-      setLoading(false)
       setShowCreateModal(false)
       setEditingCampaign(null)
-    }, 500)
+    } catch (error: any) {
+      setError(error.message || 'Failed to save campaign')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -401,7 +436,7 @@ const CampaignsPage: React.FC = () => {
 
   return (
     <main className='flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100'>
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8'>
+      <div className='max-w-7xl mx-auto '>
         {/* Header */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6'>
           <div>
@@ -549,7 +584,44 @@ const CampaignsPage: React.FC = () => {
 
               {/* Export Button */}
               <button
-                onClick={() => console.log('Exporting...')}
+                onClick={async () => {
+                  try {
+                    // Simulate export with dummy data
+                    const filteredData = filteredCampaigns.map(campaign => ({
+                      name: campaign.name,
+                      source: campaign.source,
+                      budget: campaign.budget,
+                      actualSpend: campaign.actualSpend,
+                      leadsGenerated: campaign.leadsGenerated,
+                      revenueGenerated: campaign.revenueGenerated,
+                      status: campaign.status,
+                      startDate: campaign.startDate,
+                      endDate: campaign.endDate,
+                      roi: campaign.roi
+                    }))
+                    
+                    // Create CSV content
+                    const headers = Object.keys(filteredData[0] || {})
+                    const csvContent = [
+                      headers.join(','),
+                      ...filteredData.map(row => headers.map(header => row[header as keyof typeof row]).join(','))
+                    ].join('\n')
+                    
+                    // Download CSV
+                    const blob = new Blob([csvContent], { type: 'text/csv' })
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `campaigns-${new Date().toISOString().split('T')[0]}.csv`
+                    document.body.appendChild(a)
+                    a.click()
+                    window.URL.revokeObjectURL(url)
+                    document.body.removeChild(a)
+                  } catch (error) {
+                    console.error('Export failed:', error)
+                    setError('Failed to export campaigns')
+                  }
+                }}
                 className='px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2'
               >
                 <FaDownload /> Export
@@ -910,6 +982,12 @@ const CampaignsPage: React.FC = () => {
 
                 {formErrors.dateRange && (
                   <p className='text-sm text-red-500'>{formErrors.dateRange}</p>
+                )}
+                
+                {error && (
+                  <div className='p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700'>
+                    {error}
+                  </div>
                 )}
 
                 {/* Status */}
